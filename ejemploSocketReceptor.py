@@ -23,3 +23,4 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 break   #ya se recibio todo
             print(f"Recibido: \n{data!r}") #!r !s !a, repr() str() ascii()
             #TODO responder, conn.sendall(resp), etc
+            
