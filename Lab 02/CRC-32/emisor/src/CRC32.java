@@ -28,3 +28,7 @@ public class CRC32 {
         System.out.println("Codeword transmitted: " + transmittedData);
     }
 }
+
+
+// 10011011100011000011011001111110001001001
+// 10011011100011000011011001111110001001001

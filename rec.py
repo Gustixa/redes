@@ -11,7 +11,6 @@ class CRC32:
         if len(dividend) < 16:
             dividend = dividend.zfill(16)
 
-        # print("div" + dividend)
         return dividend
 
 
@@ -38,14 +37,23 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             if not data:
                 break  # ya se recibio todo
             received_data += data  # Agrega los datos recibidos a la variable persistente
-            # print(f"Recibido: \n{data!r}")  # !r !s !a, repr() str() ascii()
         
         # Aquí puedes trabajar con los datos recibidos después de que la conexión se cierre
-        print(f"Todos los datos recibidos: \n{received_data!r}")
-        # TODO: realizar operaciones con received_data, guardarlo en un archivo, etc.
+        received_data_str = received_data.decode()  # Convertir los datos a una cadena
+        print(f"Todos los datos recibidos: \n{received_data_str}")
 
-        data, checksum, syn, dividend, received_data = "", "", "", "", ""
-        padding = 0
+        # Extraer datos y checksum
         polynomial = "100000100110000010001110110110111"  # De 32 bits
+        data_length = len(received_data_str) - 32  # Longitud de los datos originales sin el checksum
+        data = received_data_str[:data_length]
+        received_checksum = received_data_str[data_length:]
 
-        
+        # Verificación de CRC
+        obj = CRC32()
+        syn = obj.crc(received_data_str, polynomial)
+
+        if int(syn, 2) == 0:
+            print("No hay error en la transmisión")
+        else:
+            print("Error en la transmisión")
+

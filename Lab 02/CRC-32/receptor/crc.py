@@ -22,16 +22,17 @@ def main():
     # data = "110010101111" # Con 1 error
     data = "100110111" # con 2 o mas errores
 
-    dividend = data
-    padding = len(polynomial) - 1
-    for _ in range(padding):
-        dividend += "0"
+    # dividend = data
+    dividend = data + "0" * (len(polynomial) - 1)
+    # padding = len(polynomial) - 1
+    # for _ in range(padding):
+    #     dividend += "0"
 
     obj = CRC32()
     checksum = obj.crc(dividend, polynomial)
     data_with_checksum = data + checksum
-    # print("Sender checksum:", checksum)
-    # print("Codeword transmitida a través de la red:", data_with_checksum)
+    print("Sender checksum:", checksum)
+    print("Codeword transmitida a través de la red:", data_with_checksum)
 
     received_data = input("Ingrese el código recibido: ").strip()
     syn = obj.crc(received_data, polynomial)

@@ -70,7 +70,7 @@ public class Emisor{
 	private static String mensaje(){
 		Scanner scan = new Scanner(System.in);
 		System.out.println("Ingrese el texto: ");
-		String text = scan.next();
+		String text = scan.nextLine();
 		return text;
 	}
 
