@@ -104,7 +104,7 @@ def decode_hamming(encoded: List[int]):
 		syndrome += parity_value * (2 ** i)
 
 	if syndrome != 0:
-		print(f"Error detected at position {syndrome}")
+		print(f"\033[33m[Hamming]\033[0m Error detected at position {syndrome}")
 		encoded[syndrome - 1] ^= 1
 
 	data: List[int] = []
