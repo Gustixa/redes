@@ -1,6 +1,7 @@
 from typing import *
+import random
 
-def string_to_bit_list(string: str):
+def str_to_bits(string: str):
 	byte_data = string.encode()
 	bit_list: List[int] = []
 	for byte in byte_data:
@@ -9,7 +10,7 @@ def string_to_bit_list(string: str):
 	
 	return bit_list
 
-def bit_list_to_string(bit_list: List[int]):
+def bits_to_str(bit_list: List[int]):
 	if len(bit_list) % 8 != 0:
 		raise ValueError("Bit list length must be a multiple of 8")
 	byte_list = []
@@ -19,6 +20,40 @@ def bit_list_to_string(bit_list: List[int]):
 		byte_list.append(byte_int)
 	byte_data = bytes(byte_list)
 	return byte_data.decode()
+
+def list_str(list: List[Any]):
+	return ''.join(map(str, list))
+
+def flip_bit_with_probability(bit_list: List[int], probability: float):
+	list = bit_list
+	if not (0.0 <= probability <= 1.0):
+		raise ValueError("Probability must be between 0.0 and 1.0")
+
+	for i in range(len(list)):
+		if random.random() < probability:
+			list[i] = 1 - list[i]
+
+	return list
+
+def bits_to_bytes(bit_list: List[int]):
+	if len(bit_list) % 8 != 0:
+		raise ValueError("Bit list length must be a multiple of 8")
+
+	byte_list = []
+	for i in range(0, len(bit_list), 8):
+		byte_bits = bit_list[i:i+8]
+		byte = int(''.join(map(str, byte_bits)), 2)
+		byte_list.append(byte)
+	
+	return bytes(byte_list)
+
+def bytes_to_bits(byte_data: bytes):
+	bit_list: List[int] = []
+	for byte in byte_data:
+		bits = f"{byte:08b}"
+		bit_list.extend(int(bit) for bit in bits)
+	
+	return bit_list
 
 def calculate_redundant_bits(data: List[int]):
 	m = len(data)
@@ -33,7 +68,7 @@ def encode_hamming(data: List[int]):
 	r = calculate_redundant_bits(data)
 	n = m + r
 
-	encoded = [0] * n
+	encoded: List[int] = [0] * n
 
 	j = 0
 	for i in range(1, n + 1):
@@ -50,7 +85,7 @@ def encode_hamming(data: List[int]):
 				parity_value ^= encoded[j - 1]
 		encoded[parity_position - 1] = parity_value
 	
-	return ''.join(map(str, encoded))
+	return encoded
 
 def decode_hamming(encoded: List[int]):
 	encoded = list(map(int, encoded))
@@ -72,9 +107,9 @@ def decode_hamming(encoded: List[int]):
 		print(f"Error detected at position {syndrome}")
 		encoded[syndrome - 1] ^= 1
 
-	data = []
+	data: List[int] = []
 	for i in range(1, n + 1):
 		if (i & (i - 1)) != 0:
 			data.append(encoded[i - 1])
 	
-	return ''.join(map(str, data))
+	return data

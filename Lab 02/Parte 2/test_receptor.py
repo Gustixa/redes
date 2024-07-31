@@ -14,17 +14,22 @@ def start_server(host='127.0.0.1', port=65432):
 		print(f"Connected by {addr}")
 		with conn:
 			while True:
-				data = conn.recv(1024)
-				if not data:
-					break
-				crc = crc32_encode(data)
-				is_valid = crc32_verify(data, crc)
-				print(f"Received data encoded: {data.decode()}")
-				print(f"Received data decoded: {decode_hamming(data.decode())}")
-				print(f"Received data : {bit_list_to_string(decode_hamming(data.decode()))}")
-				print(f"Received CRC32: {crc:#010x}")
-				print(f"CRC32 is valid: {is_valid}")
-				conn.sendall(data + struct.pack('!I', crc))
+				response = conn.recv(1024)
+				if response:
+					data = [int(bit) for bit in str(response[:-4])[2:-1]]
+					crc_rec = struct.unpack('!I', response[-4:])[0]
+					crc_calc = crc32_encode(data)
+					is_valid_calc = crc32_verify(data, crc_calc)
+					is_valid_rec = crc32_verify(data, crc_rec)
+					print(f"Received data encoded: {list_str(data)}")
+					print(f"Received data decoded: {list_str(decode_hamming(data))}")
+					print(f"Received message: {bits_to_str(decode_hamming(data))}")
+					print(f"Received   CRC32: {crc_rec:#010x}")
+					print(f"Calculated CRC32: {crc_calc:#010x}")
+					print(f"Rec  CRC32 valid: {is_valid_rec}")
+					print(f"Calc CRC32 valid: {is_valid_calc}")
+					conn.sendall(list_str(data).encode() + struct.pack('!I', crc_calc))
+				else: break
 
 if __name__ == '__main__':
 	start_server()

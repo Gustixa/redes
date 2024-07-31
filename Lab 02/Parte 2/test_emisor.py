@@ -10,18 +10,28 @@ def start_client(host='127.0.0.1', port=65432, message='Hello, World!'):
 		client_socket.connect((host, port))
 
 		while True:
-			client_socket.sendall(encode_hamming(string_to_bit_list(message)).encode())
+			data = encode_hamming(str_to_bits(message))
+			crc = crc32_encode(data)
+			print(f"Message: {bits_to_str(decode_hamming(data))}")
+			print(f"Clean Data: {list_str(data)}")
+			noisy_data = flip_bit_with_probability(data, 0.0)
+			print(f"Noisy Data: {list_str(noisy_data)}")
+			client_socket.sendall(list_str(noisy_data).encode() + struct.pack('!I', crc))
 
 			response = client_socket.recv(1024)
 			if response:
-				data = response[:-4]
-				crc_received = struct.unpack('!I', response[-4:])[0]
-				is_valid = crc32_verify(data, crc_received)
-				print(f"Received data encoded: {data.decode()}")
-				print(f"Received data decoded: {decode_hamming(data.decode())}")
-				print(f"Received data : {bit_list_to_string(decode_hamming(data.decode()))}")
-				print(f"Received CRC32: {crc_received:#010x}")
-				print(f"CRC32 is valid: {is_valid}")
+				data = [int(bit) for bit in str(response[:-4])[2:-1]]
+				crc_rec = struct.unpack('!I', response[-4:])[0]
+				crc_calc = crc32_encode(data)
+				is_valid_calc = crc32_verify(data, crc_calc)
+				is_valid_rec = crc32_verify(data, crc_rec)
+				print(f"Received data encoded: {list_str(data)}")
+				print(f"Received data decoded: {list_str(decode_hamming(data))}")
+				print(f"Received message: {bits_to_str(decode_hamming(data))}")
+				print(f"Received   CRC32: {crc_rec:#010x}")
+				print(f"Calculated CRC32: {crc_calc:#010x}")
+				print(f"Rec  CRC32 valid: {is_valid_rec}")
+				print(f"Calc CRC32 valid: {is_valid_calc}")
 				time.sleep(2.5)
 
 if __name__ == '__main__':
