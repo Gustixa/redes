@@ -5,6 +5,8 @@ import time
 from crc32 import *
 from hamming import *
 
+NOISE_FACTOR = 0.0
+
 def start_client(host='127.0.0.1', port=65432, message='Hello, World!'):
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
 		client_socket.connect((host, port))
@@ -14,7 +16,7 @@ def start_client(host='127.0.0.1', port=65432, message='Hello, World!'):
 			crc = crc32_encode(data)
 			print(f"Message: {bits_to_str(decode_hamming(data))}")
 			print(f"Clean Data: {list_str(data)}")
-			noisy_data = flip_bit_with_probability(data, 0.0)
+			noisy_data = flip_bit_with_probability(data, NOISE_FACTOR)
 			print(f"Noisy Data: {list_str(noisy_data)}")
 			client_socket.sendall(list_str(noisy_data).encode() + struct.pack('!I', crc))
 
