@@ -83,7 +83,7 @@ def encode_hamming(bits: List[int]) -> List[int]:
 		encoded.append(encoded_bits)
 	return flatten_list(encoded)
 
-def decode_hamming(bits: List[int]) -> List[int]:
+def decode_hamming(bits: List[int], PRINT: bool) -> List[int]:
 	decoded = []
 	errors = []
 	for encoded_bits in split_into_chunks(bits, 7):
@@ -105,6 +105,6 @@ def decode_hamming(bits: List[int]) -> List[int]:
 
 	error_flatten = flatten_list(errors)
 	error_list = ''.join([f'\033[31m{bit}\033[0m' if error_flatten[i] else str(bit) for i, bit in enumerate(bits)])
-	print(f"\033[33m[Hamming]\033[0m errors: {error_list}")
-	error_list = ''.join([f'X' if error_flatten[i] else '-' for i, bit in enumerate(bits)])
+	if PRINT: print(f"\033[33m[Hamming]\033[0m errors: {error_list}")
+	error_list = ''.join([f'<r>{bit}</r>' if error_flatten[i] else str(bit) for i, bit in enumerate(bits)])
 	return flatten_list(decoded), error_list
