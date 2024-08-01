@@ -24,16 +24,17 @@ def bits_to_str(bit_list: List[int]):
 def list_str(list: List[Any]):
 	return ''.join(map(str, list))
 
-def flip_bit_with_probability(bit_list: List[int], probability: float):
-	list = bit_list
-	if not (0.0 <= probability <= 1.0):
-		raise ValueError("Probability must be between 0.0 and 1.0")
-
-	for i in range(len(list)):
+def bit_noise(bit_list: List[int], probability: float) -> List[int]:
+	noisy_bits: List[int] = []
+	for bit_sequence in split_into_chunks(bit_list, 7):
+		sequence = bit_sequence
 		if random.random() < probability:
-			list[i] = 1 - list[i]
+			error_index = random.randint(0, 6)
+			sequence[error_index] = 1 - bit_sequence[error_index]
 
-	return list
+		noisy_bits.append(sequence)
+
+	return flatten_list(noisy_bits)
 
 def bits_to_bytes(bit_list: List[int]):
 	if len(bit_list) % 8 != 0:
@@ -55,61 +56,43 @@ def bytes_to_bits(byte_data: bytes):
 	
 	return bit_list
 
-def calculate_redundant_bits(data: List[int]):
-	m = len(data)
-	r = 0
-	while (2 ** r < m + r + 1):
-		r += 1
-	return r
+def split_into_chunks(data: List[int], chunk_size: int = 4) -> List[List[int]]:
+	return [data[i:i + chunk_size] for i in range(0, len(data), chunk_size)]
 
-def encode_hamming(data: List[int]):
-	data = list(map(int, data))
-	m = len(data)
-	r = calculate_redundant_bits(data)
-	n = m + r
+def flatten_list(nested_list: List[List[Any]]) -> List[Any]:
+	return [item for sublist in nested_list for item in sublist]
 
-	encoded: List[int] = [0] * n
+def encode_hamming(bits: List[int]) -> List[int]:
+	encoded = []
+	for decoded_bits in split_into_chunks(bits, 4):
+		encoded_bits = [0] * 7
 
-	j = 0
-	for i in range(1, n + 1):
-		if (i & (i - 1)) == 0:
-			continue
-		encoded[i - 1] = data[j]
-		j += 1
+		encoded_bits[2] = decoded_bits[0]
+		encoded_bits[4] = decoded_bits[1]
+		encoded_bits[5] = decoded_bits[2]
+		encoded_bits[6] = decoded_bits[3]
 
-	for i in range(r):
-		parity_position = 2 ** i
-		parity_value = 0
-		for j in range(1, n + 1):
-			if j & parity_position:
-				parity_value ^= encoded[j - 1]
-		encoded[parity_position - 1] = parity_value
-	
-	return encoded
+		encoded_bits[0] = encoded_bits[2] ^ encoded_bits[4] ^ encoded_bits[6]
+		encoded_bits[1] = encoded_bits[2] ^ encoded_bits[5] ^ encoded_bits[6]
+		encoded_bits[3] = encoded_bits[4] ^ encoded_bits[5] ^ encoded_bits[6]
 
-def decode_hamming(encoded: List[int]):
-	encoded = list(map(int, encoded))
-	n = len(encoded)
-	r = 0
-	while (2 ** r < n + 1):
-		r += 1
+		encoded.append(encoded_bits)
+	return flatten_list(encoded)
 
-	syndrome = 0
-	for i in range(r):
-		parity_position = 2 ** i
-		parity_value = 0
-		for j in range(1, n + 1):
-			if j & parity_position:
-				parity_value ^= encoded[j - 1]
-		syndrome += parity_value * (2 ** i)
+def decode_hamming(bits: List[int]) -> List[int]:
+	decoded = []
+	for i, encoded_bits in enumerate(split_into_chunks(bits, 7)):
+		p1 = encoded_bits[0] ^ encoded_bits[2] ^ encoded_bits[4] ^ encoded_bits[6]
+		p2 = encoded_bits[1] ^ encoded_bits[2] ^ encoded_bits[5] ^ encoded_bits[6]
+		p3 = encoded_bits[3] ^ encoded_bits[4] ^ encoded_bits[5] ^ encoded_bits[6]
 
-	if syndrome != 0:
-		print(f"\033[33m[Hamming]\033[0m Error detected at position {syndrome}")
-		encoded[syndrome - 1] ^= 1
+		error_position = (p3 << 2) | (p2 << 1) | p1
 
-	data: List[int] = []
-	for i in range(1, n + 1):
-		if (i & (i - 1)) != 0:
-			data.append(encoded[i - 1])
-	
-	return data
+		if error_position != 0:
+			encoded_bits[error_position - 1] ^= 1
+			print(f"\033[33m[Hamming]\033[0m Error detected in chunk [{i}] at position [{error_position}]")
+
+		decoded_bits = [encoded_bits[2], encoded_bits[4], encoded_bits[5], encoded_bits[6]]
+
+		decoded.append(decoded_bits)
+	return flatten_list(decoded)

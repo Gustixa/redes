@@ -11,7 +11,6 @@ def start_server(host='127.0.0.1', port=65432):
 		print(f"Server listening on {host}:{port}")
 
 		conn, addr = server_socket.accept()
-		#print(f"Connected by {addr}")
 		with conn:
 			while True:
 				response = conn.recv(1024)
@@ -21,17 +20,12 @@ def start_server(host='127.0.0.1', port=65432):
 					is_valid_rec = crc32_verify(data, crc_rec)
 					crc_calc = crc32_encode(data)
 					is_valid_calc = crc32_verify(data, crc_calc)
-					#print(f"Received data encoded: {list_str(data)}")
 					try:
 						ham = decode_hamming(data)
 						print(f"\033[32m[Hamming]\033[0m decoded: {list_str(ham)}")
-					except: print("\033[31m[Hamming]\033[0m Failed to decode Hamming")
+					except Exception as e: print(f"\033[31m[Hamming]\033[0m Failed to decode Hamming [{e}]")
 					try: print(f"\033[32m[Message]\033[0m data: {bits_to_str(ham)}")
-					except: print("\033[31m[Message]\033[0m Failed to decode Message")
-					#print(f"Received   CRC32: {crc_rec:#010x}")
-					#print(f"Calculated CRC32: {crc_calc:#010x}")
-					#print(f"Rec  CRC32 valid: {is_valid_rec}")
-					#print(f"Calc CRC32 valid: {is_valid_calc}")
+					except Exception as e: print(f"\033[31m[Message]\033[0m Failed to decode Message [{e}]")
 					if is_valid_rec and is_valid_calc and crc_rec == crc_calc:
 						print(f"\033[32m[CRC32]\033[0m Verified")
 					else:
