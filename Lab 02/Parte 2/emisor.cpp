@@ -5,7 +5,6 @@
 #include <chrono>
 #include <cstring>
 #include <winsock2.h>
-#include <ws2tcpip.h>
 
 #include "crc32.hpp"
 #include "hamming.hpp"
@@ -17,36 +16,34 @@ using namespace std;
 
 const float NOISE_FACTOR = 0.5;
 
-vector<int> str_to_bits(const string &str);
-string bits_to_str(const vector<int> &bits);
-vector<int> bit_noise(const vector<int> &data, float noise_factor);
+int main() {
+	SetConsoleOutputCP(65001);
+	WSADATA wsa;
+	SOCKET client_socket;
+	struct sockaddr_in server;
+	const std::string message = "Hola C++";
 
-void start_client(const string &host = "127.0.0.1", int port = 65432, const string &message = "Hello, World!") {
-	WSADATA wsaData;
-	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (iResult != 0) {
-		cerr << "WSAStartup failed with error: " << iResult << endl;
-		return;
+	std::cout << "Inicializando Winsock..." << std::endl;
+	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
+		std::cout << "Fallo en la inicialización de Winsock. Error Code: " << WSAGetLastError() << std::endl;
+		return 1;
 	}
 
-	SOCKET client_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (client_socket == INVALID_SOCKET) {
-		cerr << "Socket creation failed with error: " << WSAGetLastError() << endl;
+	if ((client_socket = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
+		std::cout << "No se pudo crear el socket. Error Code: " << WSAGetLastError() << std::endl;
 		WSACleanup();
-		return;
+		return 1;
 	}
 
-	sockaddr_in server_address;
-	memset(&server_address, 0, sizeof(server_address));
-	server_address.sin_family = AF_INET;
-	server_address.sin_port = htons(port);
-	inet_pton(AF_INET, host.c_str(), &server_address.sin_addr);
+	server.sin_addr.s_addr = inet_addr("127.0.0.1");
+	server.sin_family = AF_INET;
+	server.sin_port = htons(8888);
 
-	if (connect(client_socket, (sockaddr*)&server_address, sizeof(server_address)) == SOCKET_ERROR) {
-		cerr << "Connection failed with error: " << WSAGetLastError() << endl;
+	if (connect(client_socket, (struct sockaddr*)&server, sizeof(server)) < 0) {
+		std::cout << "Conexión fallida. Error Code: " << WSAGetLastError() << std::endl;
 		closesocket(client_socket);
 		WSACleanup();
-		return;
+		return 1;
 	}
 
 	while (true) {
@@ -97,10 +94,5 @@ void start_client(const string &host = "127.0.0.1", int port = 65432, const stri
 
 	closesocket(client_socket);
 	WSACleanup();
-}
-
-int main() {
-	SetConsoleOutputCP(65001);
-	start_client();
 	return 0;
 }

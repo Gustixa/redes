@@ -7,7 +7,7 @@ from hamming import *
 
 NOISE_FACTOR = 0.5
 
-def start_client(host='127.0.0.1', port=65432, message='Hello, World!'):
+def start_client(host='127.0.0.1', port=8888, message='Hello, World!'):
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
 		client_socket.connect((host, port))
 
