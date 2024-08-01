@@ -4,10 +4,10 @@ import struct
 from crc32 import *
 from hamming import *
 
-NOISE_FACTOR = 0.25
-MULTI_ERROR_FACTOR = 0.01
-COUNT = 10000
-PRINT = False
+NOISE_FACTOR = 0.1
+MULTI_ERROR_FACTOR = 0.005
+COUNT = 10
+PRINT = True
 LOG = True
 
 def select_random_words(filename, num_words):
@@ -27,9 +27,9 @@ def main():
 			crc = crc32_encode(str_to_bits(message))
 			noisy_data = hamming_noise(data, NOISE_FACTOR, MULTI_ERROR_FACTOR)
 
-			if LOG: open('Log.html', 'a').write(f"\n<pre>\n[Send] message: {message}")
-			if LOG: open('Log.html', 'a').write(f"\n[Send] hamming: {list_str(data)}")
-			if LOG: open('Log.html', 'a').write(f"\n[Send] noisy  : {list_str(noisy_data)}")
+			if LOG: open('Log.html', 'a').write(f"\n<pre>\n[Send] Message: {message}")
+			if LOG: open('Log.html', 'a').write(f"\n[Send] Hamming: {list_str(data)}")
+			if LOG: open('Log.html', 'a').write(f"\n[Send] Noisy  : {list_str(noisy_data)}")
 
 			client_socket.sendall(list_str(noisy_data).encode() + struct.pack('!I', crc))
 
@@ -38,18 +38,17 @@ def main():
 				data = [int(bit) for bit in str(response[:-4])[2:-1]]
 				crc_rec = struct.unpack('!I', response[-4:])[0]
 				ham, err = decode_hamming(data, PRINT)
+				if LOG: open('Log.html', 'a').write(f"\n<y>[Hamming]</y> Errors: {err}")
+				if PRINT: print(f"\033[32m[Hamming]\033[0m Decoded: {list_str(ham)}")
+				if LOG: open('Log.html', 'a').write(f"\n<g>[Hamming]</g> Decoded: {list_str(ham)}")
 				crc_calc = crc32_encode(ham)
 				if crc_rec != crc_calc:
-					if PRINT: print(f"\033[31m[CRC32]\033[0m Failed {crc_rec:#10x} != {crc_calc:#10x}")
-					if LOG: open('Log.html', 'a').write(f"\n<r>[CRC32]</r> Failed {crc_rec:#10x} != {crc_calc:#10x}")
+					if PRINT: print(f"\033[31m[CRC32]\033[0m Failed {crc_rec} != {crc_calc}")
+					if LOG: open('Log.html', 'a').write(f"\n<r>[CRC32]</r> Failed {crc_rec} != {crc_calc}")
 					errors += 1
 				else:
-					if PRINT: print(f"\033[32m[CRC32]\033[0m Verified {crc_rec:#10x} == {crc_calc:#10x}")
-					if LOG: open('Log.html', 'a').write(f"\n<g>[CRC32]</g> Verified {crc_rec:#10x} == {crc_calc:#10x}")
-
-					if LOG: open('Log.html', 'a').write(f"\n<y>[Hamming]</y> errors: {err}")
-					if PRINT: print(f"\033[32m[Hamming]\033[0m decoded: {list_str(ham)}")
-					if LOG: open('Log.html', 'a').write(f"\n<g>[Hamming]</g> decoded: {list_str(ham)}")
+					if PRINT: print(f"\033[32m[CRC32]\033[0m Verified {crc_rec} == {crc_calc}")
+					if LOG: open('Log.html', 'a').write(f"\n<g>[CRC32]</g> Verified {crc_rec} == {crc_calc}")
 					if PRINT: print(f"\033[32m[Rec]\033[0m : {bits_to_str(ham)}")
 					if LOG: open('Log.html', 'a').write(f"\n<g>[Rec]</g> : {bits_to_str(ham)}")
 				if PRINT: print("|------------------------------------------------------------------------------------")
@@ -58,8 +57,7 @@ def main():
 		open('Log.html', 'a').write("\n<body>")
 		existing_content = open('Log.html', 'r').read()
 		open('Log.html', 'w').write(
-f"""
-<body>
+f"""<body>
 <style>
 * {{
 	font-family: 'Roboto', monospace;

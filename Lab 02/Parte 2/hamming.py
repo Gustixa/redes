@@ -105,6 +105,6 @@ def decode_hamming(bits: List[int], PRINT: bool) -> List[int]:
 
 	error_flatten = flatten_list(errors)
 	error_list = ''.join([f'\033[31m{bit}\033[0m' if error_flatten[i] else str(bit) for i, bit in enumerate(bits)])
-	if PRINT: print(f"\033[33m[Hamming]\033[0m errors: {error_list}")
+	if PRINT: print(f"\033[33m[Hamming]\033[0m Errors: {error_list}")
 	error_list = ''.join([f'<r>{bit}</r>' if error_flatten[i] else str(bit) for i, bit in enumerate(bits)])
 	return flatten_list(decoded), error_list

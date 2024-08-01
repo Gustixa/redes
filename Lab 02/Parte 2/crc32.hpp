@@ -3,6 +3,15 @@
 
 using namespace std;
 
+vector<int> convertToVectorInt(const vector<unsigned char>& vec_uchar) {
+	vector<int> vec_int;
+	vec_int.reserve(vec_uchar.size());
+	for (unsigned char c : vec_uchar) {
+		vec_int.push_back(static_cast<int>(c));
+	}
+	return vec_int;
+}
+
 vector<int> generate_crc32_table() {
 	int polynomial = 0xEDB88320;
 	vector<int> table(256);
@@ -30,9 +39,4 @@ int crc32_encode(const vector<int>& data) {
 	}
 
 	return crc ^ 0xFFFFFFFF;
-}
-
-bool crc32_verify(const vector<int>& data, int provided_checksum) {
-	int computed_checksum = crc32_encode(data);
-	return computed_checksum == provided_checksum;
 }
