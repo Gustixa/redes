@@ -6,8 +6,8 @@ from hamming import *
 
 NOISE_FACTOR = 0.1
 MULTI_ERROR_FACTOR = 0.005
-COUNT = 10
-PRINT = True
+COUNT = 8192
+PRINT = False
 LOG = True
 
 def select_random_words(filename, num_words):

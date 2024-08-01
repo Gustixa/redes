@@ -21,7 +21,7 @@ using namespace std;
 const bool PRINT = true;
 
 int main() {
-	SetConsoleOutputCP(65001);
+	SetConsoleOutputCP(CP_UTF8);
 	const int PORT = 8888;
 	const char* HOST = "127.0.0.1";
 
