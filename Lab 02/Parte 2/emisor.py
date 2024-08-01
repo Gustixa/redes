@@ -5,38 +5,50 @@ import time
 from crc32 import *
 from hamming import *
 
-NOISE_FACTOR = 0.5
+NOISE_FACTOR = 0.0
+MULTI_ERROR_FACTOR = 0.01
 
-def start_client(host='127.0.0.1', port=8888, message='Hello, World!'):
+def select_random_words(filename, num_words):
+	return ' '.join(random.sample(open(filename, 'r').read().split(), num_words))
+
+def start_client():
+	host='127.0.0.1'
+	port=8888
+	open('Log.txt', 'w').write("|------------------------------------------------------------------------------------")
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
 		client_socket.connect((host, port))
-
 		while True:
+			message = select_random_words("Words.txt", random.randrange(3,8))
 			data = encode_hamming(str_to_bits(message))
-			crc = crc32_encode(data)
-			noisy_data = hamming_noise(data, NOISE_FACTOR)
+			crc = crc32_encode(str_to_bits(message))
+			noisy_data = hamming_noise(data, NOISE_FACTOR, MULTI_ERROR_FACTOR)
+
+			open('Log.txt', 'a').write(f"\n[Send] message: {message}")
+			open('Log.txt', 'a').write(f"\n[Send] hamming: {list_str(data)}")
+			open('Log.txt', 'a').write(f"\n[Send] noisy  : {list_str(noisy_data)}")
+
 			client_socket.sendall(list_str(noisy_data).encode() + struct.pack('!I', crc))
 
 			response = client_socket.recv(1024)
 			if response:
 				data = [int(bit) for bit in str(response[:-4])[2:-1]]
 				crc_rec = struct.unpack('!I', response[-4:])[0]
-				crc_calc = crc32_encode(data)
-				is_valid_calc = crc32_verify(data, crc_calc)
-				is_valid_rec = crc32_verify(data, crc_rec)
-				try:
-					ham = decode_hamming(data)
-					print(f"\033[32m[Hamming]\033[0m decoded: {list_str(ham)}")
-				except Exception as e: print(f"\033[31m[Hamming]\033[0m Failed to decode Hamming [{e}]")
-				try: print(f"\033[32m[Message]\033[0m data: {bits_to_str(ham)}")
-				except Exception as e: print(f"\033[31m[Message]\033[0m Failed to decode Message [{e}]")
-				if is_valid_rec and is_valid_calc and crc_rec == crc_calc:
-					print(f"\033[32m[CRC32]\033[0m Verified")
+				ham, err = decode_hamming(data)
+				crc_calc = crc32_encode(ham)
+				if crc_rec != crc_calc:
+					print(f"\033[31m[CRC32]\033[0m Failed {crc_rec:#10x} != {crc_calc:#10x}")
+					open('Log.txt', 'a').write(f"\n[CRC32] Failed {crc_rec:#10x} != {crc_calc:#10x}")
 				else:
-					print(f"\033[31m[CRC32]\033[0m Failed")
-					print(f"\033[31m[CRC32]\033[0m Received  : {crc_rec:#10x}")
-					print(f"\033[31m[CRC32]\033[0m Calculated: {crc_calc:#10x}")
-				print("|---------------------------------")
+					print(f"\033[32m[CRC32]\033[0m Verified {crc_rec:#10x} == {crc_calc:#10x}")
+					open('Log.txt', 'a').write(f"\n[CRC32] Verified {crc_rec:#10x} == {crc_calc:#10x}")
+
+					open('Log.txt', 'a').write(f"\n[Hamming] errors: {err}")
+					print(f"\033[32m[Hamming]\033[0m decoded: {list_str(ham)}")
+					open('Log.txt', 'a').write(f"\n[Hamming] decoded: {list_str(ham)}")
+					print(f"\033[32m[Rec]\033[0m : {bits_to_str(ham)}")
+					open('Log.txt', 'a').write(f"\n[Rec] : {bits_to_str(ham)}")
+				print("|------------------------------------------------------------------------------------")
+				open('Log.txt', 'a').write("\n|------------------------------------------------------------------------------------")
 				time.sleep(2.5)
 
 if __name__ == '__main__':

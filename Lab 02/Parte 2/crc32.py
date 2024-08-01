@@ -19,7 +19,3 @@ def crc32_encode(data: List[int]) -> int:
 	for byte in data:
 		crc = crc32_table[(crc ^ byte) & 0xFF] ^ (crc >> 8)
 	return crc ^ 0xFFFFFFFF
-
-def crc32_verify(data, provided_checksum) -> bool:
-	computed_checksum = crc32_encode(data)
-	return computed_checksum == provided_checksum
