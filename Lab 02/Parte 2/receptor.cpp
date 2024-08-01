@@ -97,6 +97,7 @@ int main() {
 				cout << "\033[32m[Rec]\033[0m : " << bits_to_str(ham) << endl;
 			}
 		}
+		cout << "|------------------------------------------------------------------------------------" << endl;
 
 		send(client_socket, buffer, bytes_received, 0);
 	}
