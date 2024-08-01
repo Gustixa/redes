@@ -18,7 +18,7 @@
 
 using namespace std;
 
-const bool PRINT = true;
+const bool PRINT = false;
 
 int main() {
 	SetConsoleOutputCP(CP_UTF8);
@@ -72,34 +72,40 @@ int main() {
 		return 1;
 	}
 
-	char buffer[1024];
+	char buffer[8192];
 	int bytes_received;
-	while ((bytes_received = recv(client_socket, buffer, 1024, 0)) > 0) {
-		vector<int> data;
-		for (int i = 0; i < bytes_received - 4; ++i) {
-			data.push_back(buffer[i] - '0');
-		}
-
-		uint32_t crc_rec = ntohl(*reinterpret_cast<uint32_t*>(buffer + bytes_received - 4));
-		auto [ham, err] = decode_hamming(data, PRINT);
-		if (PRINT) {
-			cout << "\033[32m[Hamming]\033[0m Decoded: " << list_str(data) << endl;
-		}
-		uint32_t crc_calc = crc32_encode(ham);
-
-		if (crc_rec != crc_calc) {
-			if (PRINT) {
-				cerr << "\033[31m[CRC32]\033[0m Failed " << hex << crc_rec << " != " << crc_calc << endl;
+	while ((bytes_received = recv(client_socket, buffer, 8192, 0)) > 0) {
+		try {
+			vector<int> data;
+				for (int i = 0; i < bytes_received - 4; ++i) {
+				data.push_back(buffer[i] - '0');
 			}
-		} else {
+
+			uint32_t crc_rec = ntohl(*reinterpret_cast<uint32_t*>(buffer + bytes_received - 4));
+			auto [ham, err] = decode_hamming(data, PRINT);
 			if (PRINT) {
-				cout << "\033[32m[CRC32]\033[0m Verified " << hex << crc_rec << " == " << crc_calc << endl;
-				cout << "\033[32m[Rec]\033[0m : " << bits_to_str(ham) << endl;
+				cout << "\033[32m[Hamming]\033[0m Decoded: " << list_str(data) << endl;
+			}
+			uint32_t crc_calc = crc32_encode(ham);
+
+			if (crc_rec != crc_calc) {
+				if (PRINT) {
+					cerr << "\033[31m[CRC32]\033[0m Failed " << hex << crc_rec << " != " << crc_calc << endl;
+				}
+			} else {
+				if (PRINT) {
+					cout << "\033[32m[CRC32]\033[0m Verified " << hex << crc_rec << " == " << crc_calc << endl;
+					cout << "\033[32m[Rec]\033[0m : " << bits_to_str(ham) << endl;
+				}
+			}
+			if (PRINT) {
+				cout << "|------------------------------------------------------------------------------------" << endl;
 			}
 		}
-		cout << "|------------------------------------------------------------------------------------" << endl;
-
-		send(client_socket, buffer, bytes_received, 0);
+		catch (exception e) {
+			cerr << e.what() << endl;
+		}
+		send (client_socket, buffer, bytes_received, 0);
 	}
 
 	closesocket(client_socket);
