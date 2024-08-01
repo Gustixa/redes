@@ -1,6 +1,10 @@
+# Integrantes
 
-# Lab 2
-[Log](/Lab%2002/Parte%202/Log.html)
+**Alejandro Martinez - 21430**
 
-# Registro que carpeta Lab 02 se recupero, pero se perdio el historial. Aun asi, se valida en historial de commits
-![alt text](image.png)
+**Samuel Argueta - 211024**
+
+# Lab 2 Parte 1
+[Lab 2.1](/Lab%2002/Parte%201/)
+# Lab 2 Parte 2
+[Lab 2.2](/Lab%2002/Parte%202/)
