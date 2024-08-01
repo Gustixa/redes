@@ -47,7 +47,6 @@ def bytes_to_bits(byte_data: bytes):
 def split_into_chunks(data: List[int], chunk_size: int = 4) -> List[List[int]]:
 	return [data[i:i + chunk_size] for i in range(0, len(data), chunk_size)]
 
-
 def flatten_list(nested_list: List[List[Any]]) -> List[Any]:
 	return [item for sublist in nested_list for item in sublist]
 
@@ -106,6 +105,6 @@ def decode_hamming(bits: List[int], PRINT: bool) -> List[int]:
 
 	error_flatten = flatten_list(errors)
 	error_list = ''.join([f'\033[31m{bit}\033[0m' if error_flatten[i] else str(bit) for i, bit in enumerate(bits)])
-	if PRINT: print(f"\033[33m[Hamming]\033[0m errors: {error_list}")
+	if PRINT: print(f"\033[33m[Hamming]\033[0m Errors: {error_list}")
 	error_list = ''.join([f'<r>{bit}</r>' if error_flatten[i] else str(bit) for i, bit in enumerate(bits)])
 	return flatten_list(decoded), error_list
