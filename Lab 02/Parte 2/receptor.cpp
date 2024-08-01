@@ -80,12 +80,12 @@ int main() {
 			data.push_back(buffer[i] - '0');
 		}
 
-		int crc_rec = *reinterpret_cast<int*>(buffer + bytes_received - 4);
+		uint32_t crc_rec = ntohl(*reinterpret_cast<uint32_t*>(buffer + bytes_received - 4));
 		auto [ham, err] = decode_hamming(data, PRINT);
 		if (PRINT) {
 			cout << "\033[32m[Hamming]\033[0m Decoded: " << list_str(data) << endl;
 		}
-		int crc_calc = crc32_encode(ham);
+		uint32_t crc_calc = crc32_encode(ham);
 
 		if (crc_rec != crc_calc) {
 			if (PRINT) {
