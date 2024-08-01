@@ -1,1 +1,2 @@
-# redes_lab2
+# Lab 2
+# [Log](./Lab 02/Log.html)
