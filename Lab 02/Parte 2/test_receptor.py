@@ -18,9 +18,9 @@ def start_server(host='127.0.0.1', port=65432):
 				if response:
 					data = [int(bit) for bit in str(response[:-4])[2:-1]]
 					crc_rec = struct.unpack('!I', response[-4:])[0]
+					is_valid_rec = crc32_verify(data, crc_rec)
 					crc_calc = crc32_encode(data)
 					is_valid_calc = crc32_verify(data, crc_calc)
-					is_valid_rec = crc32_verify(data, crc_rec)
 					#print(f"Received data encoded: {list_str(data)}")
 					try:
 						ham = decode_hamming(data)
@@ -36,6 +36,8 @@ def start_server(host='127.0.0.1', port=65432):
 						print(f"\033[32m[CRC32]\033[0m Verified")
 					else:
 						print(f"\033[31m[CRC32]\033[0m Failed")
+						print(f"\033[31m[CRC32]\033[0m Received  : {crc_rec:#10x}")
+						print(f"\033[31m[CRC32]\033[0m Calculated: {crc_calc:#10x}")
 					print("|---------------------------------")
 					conn.sendall(list_str(data).encode() + struct.pack('!I', crc_calc))
 				else: break

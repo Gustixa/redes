@@ -5,7 +5,7 @@ import time
 from crc32 import *
 from hamming import *
 
-NOISE_FACTOR = 0.05
+NOISE_FACTOR = 0.0
 
 def start_client(host='127.0.0.1', port=65432, message='Hello, World!'):
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
@@ -42,6 +42,8 @@ def start_client(host='127.0.0.1', port=65432, message='Hello, World!'):
 					print(f"\033[32m[CRC32]\033[0m Verified")
 				else:
 					print(f"\033[31m[CRC32]\033[0m Failed")
+					print(f"\033[31m[CRC32]\033[0m Received  : {crc_rec:#10x}")
+					print(f"\033[31m[CRC32]\033[0m Calculated: {crc_calc:#10x}")
 				print("|---------------------------------")
 				time.sleep(2.5)
 
