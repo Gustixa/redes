@@ -1,92 +1,110 @@
 #include <iostream>
-#include <vector>
-#include <string>
-#include <stdexcept>
-#include <bitset>
-#include <random>
-#include <arpa/inet.h>
-#include <unistd.h>
 #include <cstring>
-#include "ham.hpp"
-#include "crc32.hpp"
+#include <sstream>
+#include <chrono>
+#include <string>
+#include <thread>
+#include <vector>
+#include <bitset>
 
-#define PORT 8888
-#define BUFFER_SIZE 1024
+#include <winsock2.h>
+#include <ws2tcpip.h>
+
+#include "crc32.hpp"
+#include "hamming.hpp"
+
+#pragma comment(lib, "ws2_32.lib")
+#pragma execution_character_set( "utf-8" )
 
 using namespace std;
 
-void start_server() {
-    int server_fd, new_socket;
-    struct sockaddr_in address;
-    int addrlen = sizeof(address);
-    char buffer[BUFFER_SIZE] = {0};
-
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-        perror("socket failed");
-        exit(EXIT_FAILURE);
-    }
-
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(PORT);
-
-    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
-        perror("bind failed");
-        close(server_fd);
-        exit(EXIT_FAILURE);
-    }
-
-    if (listen(server_fd, 3) < 0) {
-        perror("listen");
-        close(server_fd);
-        exit(EXIT_FAILURE);
-    }
-
-    if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
-        perror("accept");
-        close(server_fd);
-        exit(EXIT_FAILURE);
-    }
-
-    while (true) {
-        int valread = read(new_socket, buffer, BUFFER_SIZE);
-        if (valread <= 0) {
-            break;
-        }
-
-        vector<int> data;
-        for (int i = 0; i < valread - 4; ++i) {
-            data.push_back(buffer[i] - '0');
-        }
-
-        uint32_t crc_rec;
-        memcpy(&crc_rec, buffer + valread - 4, sizeof(crc_rec));
-        crc_rec = ntohl(crc_rec);
-
-        vector<int> decoded_data = decode_hamming(data);
-        uint32_t crc_calc = crc32_encode(decoded_data);
-
-        if (crc_rec != crc_calc) {
-            cout << "\033[31m[CRC32]\033[0m Failed " << hex << crc_rec << " != " << crc_calc << dec << endl;
-        } else {
-            cout << "\033[32m[CRC32]\033[0m Verified " << hex << crc_rec << " == " << crc_calc << dec << endl;
-            cout << "\033[32m[Hamming]\033[0m decoded: " << list_str(decoded_data) << endl;
-            cout << "\033[32m[Rec]\033[0m : " << bits_to_str(decoded_data) << endl;
-        }
-
-        cout << "|------------------------------------------------------------------------------------" << endl;
-
-        string response = list_str(data);
-        uint32_t crc_response = htonl(crc_rec);
-        write(new_socket, response.c_str(), response.size());
-        write(new_socket, &crc_response, sizeof(crc_response));
-    }
-
-    close(new_socket);
-    close(server_fd);
-}
+const bool PRINT = true;
 
 int main() {
-    start_server();
-    return 0;
+	SetConsoleOutputCP(CP_UTF8);
+	const int PORT = 8888;
+	const char* HOST = "127.0.0.1";
+
+	WSADATA wsaData;
+	SOCKET server_socket, client_socket;
+	struct sockaddr_in server_addr, client_addr;
+	int client_addr_len = sizeof(client_addr);
+
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+		cerr << "WSAStartup failed." << endl;
+		return 1;
+	}
+
+	server_socket = socket(AF_INET, SOCK_STREAM, 0);
+	if (server_socket == INVALID_SOCKET) {
+		cerr << "Socket creation failed." << endl;
+		WSACleanup();
+		return 1;
+	}
+
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port = htons(PORT);
+	inet_pton(AF_INET, HOST, &server_addr.sin_addr);
+
+	if (bind(server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == SOCKET_ERROR) {
+		cerr << "Bind failed." << endl;
+		closesocket(server_socket);
+		WSACleanup();
+		return 1;
+	}
+
+	if (listen(server_socket, SOMAXCONN) == SOCKET_ERROR) {
+		cerr << "Listen failed." << endl;
+		closesocket(server_socket);
+		WSACleanup();
+		return 1;
+	}
+
+	if (PRINT) {
+		cout << "Server listening on " << HOST << ":" << PORT << endl;
+	}
+
+	client_socket = accept(server_socket, (struct sockaddr*)&client_addr, &client_addr_len);
+	if (client_socket == INVALID_SOCKET) {
+		cerr << "Accept failed." << endl;
+		closesocket(server_socket);
+		WSACleanup();
+		return 1;
+	}
+
+	char buffer[1024];
+	int bytes_received;
+	while ((bytes_received = recv(client_socket, buffer, 1024, 0)) > 0) {
+		vector<int> data;
+		for (int i = 0; i < bytes_received - 4; ++i) {
+			data.push_back(buffer[i] - '0');
+		}
+
+		uint32_t crc_rec = ntohl(*reinterpret_cast<uint32_t*>(buffer + bytes_received - 4));
+		auto [ham, err] = decode_hamming(data, PRINT);
+		if (PRINT) {
+			cout << "\033[32m[Hamming]\033[0m Decoded: " << list_str(data) << endl;
+		}
+		uint32_t crc_calc = crc32_encode(ham);
+
+		if (crc_rec != crc_calc) {
+			if (PRINT) {
+				cerr << "\033[31m[CRC32]\033[0m Failed " << crc_rec << " != " << crc_calc << endl;
+			}
+		} else {
+			if (PRINT) {
+				cout << "\033[32m[CRC32]\033[0m Verified " << crc_rec << " == " << crc_calc << endl;
+				cout << "\033[32m[Rec]\033[0m : " << bits_to_str(ham) << endl;
+			}
+		}
+		cout << "|------------------------------------------------------------------------------------" << endl;
+
+		send(client_socket, buffer, bytes_received, 0);
+	}
+
+	closesocket(client_socket);
+	closesocket(server_socket);
+	WSACleanup();
+
+	return 0;
 }

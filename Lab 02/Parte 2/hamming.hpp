@@ -92,25 +92,51 @@ vector<int> encode_hamming(const vector<int> &bits) {
 	return encoded;
 }
 
-vector<int> decode_hamming(const vector<int> &bits) {
-	vector<int> decoded;
-	auto chunks = split_into_chunks(bits, 7);
-	for (size_t i = 0; i < chunks.size(); ++i) {
-		auto encoded_bits = chunks[i];
+pair<vector<int>, string> decode_hamming(const vector<int> &bits, const bool& PRINT) {
+	vector<vector<int>> decoded;
+	vector<vector<int>> errors;
 
-		int p1 = encoded_bits[0] ^ encoded_bits[2] ^ encoded_bits[4] ^ encoded_bits[6];
-		int p2 = encoded_bits[1] ^ encoded_bits[2] ^ encoded_bits[5] ^ encoded_bits[6];
-		int p3 = encoded_bits[3] ^ encoded_bits[4] ^ encoded_bits[5] ^ encoded_bits[6];
+	auto encodedChunks = split_into_chunks(bits, 7);
+	for (auto& encodedBits : encodedChunks) {
+		int p1 = encodedBits[0] ^ encodedBits[2] ^ encodedBits[4] ^ encodedBits[6];
+		int p2 = encodedBits[1] ^ encodedBits[2] ^ encodedBits[5] ^ encodedBits[6];
+		int p3 = encodedBits[3] ^ encodedBits[4] ^ encodedBits[5] ^ encodedBits[6];
 
-		int error_position = (p3 << 2) | (p2 << 1) | p1;
+		vector<int> error(7, 0);
+		int errorPosition = (p3 << 2) | (p2 << 1) | p1;
 
-		if (error_position != 0) {
-			encoded_bits[error_position - 1] ^= 1;
-			cout << "\033[33m[Hamming]\033[0m Error detected in chunk [" << i << "] at position [" << error_position << "]\n";
+		if (errorPosition != 0) {
+			encodedBits[errorPosition - 1] ^= 1;
+			error[errorPosition - 1] = 1;
 		}
 
-		vector<int> decoded_bits = {encoded_bits[2], encoded_bits[4], encoded_bits[5], encoded_bits[6]};
-		decoded.insert(decoded.end(), decoded_bits.begin(), decoded_bits.end());
+		vector<int> decodedBits = {encodedBits[2], encodedBits[4], encodedBits[5], encodedBits[6]};
+		decoded.push_back(decodedBits);
+		errors.push_back(error);
 	}
-	return decoded;
+
+	auto errorFlatten = flatten_list(errors);
+	string errorList;
+	for (size_t i = 0; i < bits.size(); ++i) {
+		if (errorFlatten[i]) {
+			errorList += "\033[31m" + to_string(bits[i]) + "\033[0m";
+		} else {
+			errorList += to_string(bits[i]);
+		}
+	}
+
+	if (PRINT) {
+		cout << "\033[33m[Hamming]\033[0m errors: " << errorList << endl;
+	}
+
+	errorList.clear();
+	for (size_t i = 0; i < bits.size(); ++i) {
+		if (errorFlatten[i]) {
+			errorList += "<r>" + to_string(bits[i]) + "</r>";
+		} else {
+			errorList += to_string(bits[i]);
+		}
+	}
+
+	return { flatten_list(decoded), errorList };
 }

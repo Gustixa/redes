@@ -23,13 +23,13 @@ def start_server():
 					data = [int(bit) for bit in str(response[:-4])[2:-1]]
 					crc_rec = struct.unpack('!I', response[-4:])[0]
 					ham, err = decode_hamming(data, PRINT)
+					if PRINT: print(f"\033[32m[Hamming]\033[0m decoded: {list_str(ham)}")
 					crc_calc = crc32_encode(ham)
 					if crc_rec != crc_calc:
 						if PRINT:print(f"\033[31m[CRC32]\033[0m Failed {crc_rec:#10x} != {crc_calc:#10x}")
 					else:
 						if PRINT:
 							print(f"\033[32m[CRC32]\033[0m Verified {crc_rec:#10x} == {crc_calc:#10x}")
-							print(f"\033[32m[Hamming]\033[0m decoded: {list_str(ham)}")
 							print(f"\033[32m[Rec]\033[0m : {bits_to_str(ham)}")
 					if PRINT:print("|------------------------------------------------------------------------------------")
 					conn.sendall(list_str(data).encode() + struct.pack('!I', crc_rec))
