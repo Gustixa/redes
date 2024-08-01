@@ -89,11 +89,11 @@ int main() {
 
 		if (crc_rec != crc_calc) {
 			if (PRINT) {
-				cerr << "\033[31m[CRC32]\033[0m Failed " << crc_rec << " != " << crc_calc << endl;
+				cerr << "\033[31m[CRC32]\033[0m Failed " << hex << crc_rec << " != " << crc_calc << endl;
 			}
 		} else {
 			if (PRINT) {
-				cout << "\033[32m[CRC32]\033[0m Verified " << crc_rec << " == " << crc_calc << endl;
+				cout << "\033[32m[CRC32]\033[0m Verified " << hex << crc_rec << " == " << crc_calc << endl;
 				cout << "\033[32m[Rec]\033[0m : " << bits_to_str(ham) << endl;
 			}
 		}
