@@ -72,11 +72,11 @@ int main() {
 		return 1;
 	}
 
-	char buffer[1024];
+	char buffer[8192];
 	int bytes_received;
-	while ((bytes_received = recv(client_socket, buffer, 1024, 0)) > 0) {
-		vector<int> data;
+	while ((bytes_received = recv(client_socket, buffer, 8192, 0)) > 0) {
 		try {
+			vector<int> data;
 				for (int i = 0; i < bytes_received - 4; ++i) {
 				data.push_back(buffer[i] - '0');
 			}
