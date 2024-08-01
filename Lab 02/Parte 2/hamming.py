@@ -47,6 +47,7 @@ def bytes_to_bits(byte_data: bytes):
 def split_into_chunks(data: List[int], chunk_size: int = 4) -> List[List[int]]:
 	return [data[i:i + chunk_size] for i in range(0, len(data), chunk_size)]
 
+
 def flatten_list(nested_list: List[List[Any]]) -> List[Any]:
 	return [item for sublist in nested_list for item in sublist]
 

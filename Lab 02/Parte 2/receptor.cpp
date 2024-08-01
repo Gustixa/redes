@@ -7,7 +7,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <cstring>
-#include "hamming.hpp"
+#include "ham.hpp"
 #include "crc32.hpp"
 
 #define PORT 8888
