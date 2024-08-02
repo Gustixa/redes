@@ -18,7 +18,7 @@
 
 using namespace std;
 
-const bool PRINT = false;
+const bool PRINT = true;
 
 int main() {
 	SetConsoleOutputCP(CP_UTF8);
