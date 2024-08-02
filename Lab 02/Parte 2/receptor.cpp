@@ -84,18 +84,19 @@ int main() {
 			uint32_t crc_rec = ntohl(*reinterpret_cast<uint32_t*>(buffer + bytes_received - 4));
 			auto [ham, err] = decode_hamming(data, PRINT);
 			if (PRINT) {
-				cout << "\033[32m[Hamming]\033[0m Decoded: " << list_str(data) << endl;
+				cout << "[Hamming] Decoded: " << list_str(data) << endl;
 			}
 			uint32_t crc_calc = crc32_encode(ham);
 
 			if (crc_rec != crc_calc) {
 				if (PRINT) {
 					cerr << "\033[31m[CRC32]\033[0m Failed " << hex << crc_rec << " != " << crc_calc << endl;
+					cout << "\033[31m[Failure]\033[0m" << endl;
 				}
 			} else {
 				if (PRINT) {
 					cout << "\033[32m[CRC32]\033[0m Verified " << hex << crc_rec << " == " << crc_calc << endl;
-					cout << "\033[32m[Rec]\033[0m : " << bits_to_str(ham) << endl;
+					cout << "\033[32m[Success]\033[0m : " << bits_to_str(ham) << endl;
 				}
 			}
 			if (PRINT) {

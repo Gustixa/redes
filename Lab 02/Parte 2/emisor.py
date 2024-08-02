@@ -6,6 +6,7 @@ from sympy import sympify
 
 from crc32 import *
 from hamming import *
+
 WORD_MIN_LENGTH = 2
 WORD_MAX_LENGTH = 4
 NOISE_FACTOR_START = 0
@@ -66,11 +67,15 @@ def main():
 					message = select_random_words("Words.txt")
 					data = encode_hamming(str_to_bits(message))
 					crc = crc32_encode(str_to_bits(message))
-					noisy_data = hamming_noise(data, sympify(noise_rate * NOISE_FACTOR_INC), sympify(error_rate * ERROR_RATE_INC))
+					noisy_data, printable, loggable = hamming_noise(data, sympify(noise_rate * NOISE_FACTOR_INC), sympify(error_rate * ERROR_RATE_INC))
+					if PRINT :
+						print(f"[Send] Message: {message}")
+						print(f"[Send] Hamming: {list_str(data)}")
+						print(f"[Send] Noisy  : {printable}")
 					if LOG :
 						open(FILE, 'a').write(f"\n<pre>\n[Send] Message: {message}")
 						open(FILE, 'a').write(f"\n[Send] Hamming: {list_str(data)}")
-						open(FILE, 'a').write(f"\n[Send] Noisy  : {list_str(noisy_data)}")
+						open(FILE, 'a').write(f"\n[Send] Noisy  : {loggable}")
 
 					client_socket.sendall(list_str(noisy_data).encode() + struct.pack('!I', crc))
 
@@ -81,20 +86,24 @@ def main():
 						ham, err = decode_hamming(data, PRINT)
 						if LOG:
 							open(FILE, 'a').write(f"\n<y>[Hamming]</y> Errors: {err}")
-							open(FILE, 'a').write(f"\n<g>[Hamming]</g> Decoded: {list_str(ham)}")
-						if PRINT: print(f"\033[32m[Hamming]\033[0m Decoded: {list_str(ham)}")
+							open(FILE, 'a').write(f"\n[Hamming] Decoded: {list_str(ham)}")
+						if PRINT: print(f"[Hamming] Decoded: {list_str(ham)}")
 						crc_calc = crc32_encode(ham)
 						if crc_rec != crc_calc:
-							if PRINT: print(f"\033[31m[CRC32]\033[0m Failed {crc_rec:#10x} != {crc_calc:#10x}")
-							if LOG: open(FILE, 'a').write(f"\n<r>[CRC32]</r> Failed {crc_rec:#10x} != {crc_calc:#10x}")
+							if PRINT:
+								print(f"\033[31m[CRC32]\033[0m Failed {crc_rec:#10x} != {crc_calc:#10x}")
+								print(f"\033[31m[Failure]\033[0m")
+							if LOG:
+								open(FILE, 'a').write(f"\n<r>[CRC32]</r> Failed {crc_rec:#10x} != {crc_calc:#10x}")
+								open(FILE, 'a').write(f"\n<r>[Failure]</r>")
 							errors += 1
 						else:
 							if PRINT:
 								print(f"\033[32m[CRC32]\033[0m Verified {crc_rec:#10x} == {crc_calc:#10x}")
-								print(f"\033[32m[Rec]\033[0m : {bits_to_str(ham)}")
+								print(f"\033[32m[Success]\033[0m : {bits_to_str(ham)}")
 							if LOG:
 								open(FILE, 'a').write(f"\n<g>[CRC32]</g> Verified {crc_rec:#10x} == {crc_calc:#10x}")
-								open(FILE, 'a').write(f"\n<g>[Rec]</g> : {bits_to_str(ham)}")
+								open(FILE, 'a').write(f"\n<g>[Success]</g> : {bits_to_str(ham)}")
 						if PRINT: print("|------------------------------------------------------------------------------------")
 						if LOG: open(FILE, 'a').write("\n</pre>")
 				print(f"Error Factor: {strp(str(sympify(error_rate* ERROR_RATE_INC*100)))} %")

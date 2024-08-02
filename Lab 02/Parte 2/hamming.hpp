@@ -126,7 +126,7 @@ pair<vector<int>, string> decode_hamming(const vector<int> &bits, const bool& PR
 	}
 
 	if (PRINT) {
-		cout << "\033[33m[Hamming]\033[0m errors: " << errorList << endl;
+		cout << "\033[33m[Hamming]\033[0m Errors: " << errorList << endl;
 	}
 
 	errorList.clear();

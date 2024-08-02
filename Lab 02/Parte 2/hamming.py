@@ -50,21 +50,31 @@ def split_into_chunks(data: List[int], chunk_size: int = 4) -> List[List[int]]:
 def flatten_list(nested_list: List[List[Any]]) -> List[Any]:
 	return [item for sublist in nested_list for item in sublist]
 
-def hamming_noise(bit_list: List[int], factor: float, multi_error: int) -> List[int]:
+def hamming_noise(bit_list: List[int], factor: float, multi_error: int) -> Tuple[List[int], str, str]:
 	noisy_bits: List[int] = []
+	printable: str = ""
+	loggable: str = ""
 	for bit_sequence in split_into_chunks(bit_list, 7):
 		sequence = bit_sequence
-		if random.random() < factor:
+		print = [str(bit) for bit in sequence]
+		log = [str(bit) for bit in sequence]
+		if random.random() < factor: # Hamming Noise
 			error_index = random.randint(0, 6)
 			sequence[error_index] = 1 - bit_sequence[error_index]
+			print[error_index] = f"\033[32m{sequence[error_index]}\033"
+			log[error_index] = f"<g>{sequence[error_index]}</g>"
 
-		for i in range(7):
+		for i in range(7): # White_noise
 			if random.random() < multi_error:
 				sequence[i] = 1 - sequence[i]
+				print[i] = f"\033[33m{sequence[i]}\033"
+				log[i] = f"<y>{sequence[i]}</y>"
 
 		noisy_bits.append(sequence)
+		printable += ''.join(print)
+		loggable += ''.join(log)
 
-	return flatten_list(noisy_bits)
+	return flatten_list(noisy_bits), printable, loggable
 
 def encode_hamming(bits: List[int]) -> List[int]:
 	encoded = []
